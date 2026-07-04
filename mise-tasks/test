@@ -18,6 +18,7 @@ echo "=== Testing mise helm-plugin backend ==="
 if ! mise which helm &>/dev/null; then
     echo "--- Installing helm via mise..."
     mise use --system helm@"${HELM_VERSION}"
+    eval "$(mise env)"
 fi
 
 echo "--- Testing version listing for ${TEST_TOOL}..."
