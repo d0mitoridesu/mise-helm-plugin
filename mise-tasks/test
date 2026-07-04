@@ -47,9 +47,10 @@ cat > "$WORK_DIR/mise.toml" <<EOF
 _.helm-plugin = { tools = true }
 
 [tools]
+helm = "${HELM_VERSION}"
 "helm-plugin:${TEST_TOOL}" = { version = "${TEST_VERSION}", verify = "false" }
 EOF
-(cd "$WORK_DIR" && mise trust && mise install)
+(cd "$WORK_DIR" && mise trust && mise install helm && mise install)
 echo "✓ Installation succeeded"
 
 echo "--- Testing that HELM_PLUGINS is set in mise env..."
