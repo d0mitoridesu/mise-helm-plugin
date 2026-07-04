@@ -13,10 +13,10 @@ TEST_VERSION="3.9.0"
 
 echo "=== Testing mise helm-plugin backend ==="
 
-# Require helm to be available
+# Ensure helm is available, installing it via mise if needed
 if ! command -v helm &>/dev/null && ! mise which helm &>/dev/null; then
-    echo "✗ helm binary not found - install helm before running tests"
-    exit 1
+    echo "--- Installing helm via mise..."
+    mise use --global helm@latest
 fi
 
 echo "--- Testing version listing for ${TEST_TOOL}..."
