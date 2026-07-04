@@ -1,0 +1,27 @@
+# [env]
+# _.helm-plugin = { tools = true }
+
+[tools]
+actionlint = "latest"
+hk = "latest"
+lua = "latest"
+lua-language-server = "latest"
+pkl = "latest"
+shellcheck = "0.11.0"
+stylua = "latest"
+
+[tasks.format]
+description = "Format Lua scripts"
+run = "stylua metadata.lua hooks/"
+
+[tasks.lint]
+description = "Lint Lua scripts and GitHub Actions using hk"
+run = "hk check"
+
+[tasks.lint-fix]
+description = "Fix linting issues"
+run = "hk fix"
+
+[tasks.ci]
+description = "Run all CI checks"
+depends = ["lint", "test"]

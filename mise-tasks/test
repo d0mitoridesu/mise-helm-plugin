@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+#MISE description="Run backend plugin tests - test plugin linking and basic functionality"
+set -euo pipefail
+
+# Link the plugin for testing
+mise plugin link --force helm-plugin .
+
+# Clear cache to ensure fresh testing
+mise cache clear
+
+TEST_TOOL="databus23/helm-diff"
+TEST_VERSION="3.9.0"
+
+echo "=== Testing mise helm-plugin backend ==="
+
+# Require helm to be available
+if ! command -v helm &>/dev/null && ! mise which helm &>/dev/null; then
+    echo "✗ helm binary not found - install helm before running tests"
+    exit 1
+fi
+
+echo "--- Testing version listing for ${TEST_TOOL}..."
+versions=$(mise ls-remote "helm-plugin:${TEST_TOOL}")
+if [[ -n "$versions" ]]; then
+    echo "✓ Version listing works ($(echo "$versions" | wc -l | tr -d ' ') versions found)"
+else
+    echo "✗ Version listing returned no versions"
+    exit 1
+fi
+
+echo "--- Checking that ${TEST_VERSION} is in the listed versions..."
+if echo "$versions" | grep -qx "${TEST_VERSION}"; then
+    echo "✓ Expected version ${TEST_VERSION} is present"
+else
+    echo "✗ Expected version ${TEST_VERSION} not found in version list"
+    exit 1
+fi
+
+# Install via a temp config so we can pass verify=false as a tool option
+echo "--- Testing installation of helm-plugin:${TEST_TOOL}@${TEST_VERSION}..."
+WORK_DIR=$(mktemp -d)
+trap 'rm -rf "$WORK_DIR"' EXIT
+cat > "$WORK_DIR/mise.toml" <<EOF
+[env]
+_.helm-plugin = { tools = true }
+
+[tools]
+"helm-plugin:${TEST_TOOL}" = { version = "${TEST_VERSION}", verify = "false" }
+EOF
+(cd "$WORK_DIR" && mise trust && mise install)
+echo "✓ Installation succeeded"
+
+echo "--- Testing that HELM_PLUGINS is set in mise env..."
+HELM_PLUGINS_VAL=$(cd "$WORK_DIR" && mise env | grep "^export HELM_PLUGINS=" | cut -d= -f2- | tr -d '"')
+if [[ -n "$HELM_PLUGINS_VAL" ]]; then
+    echo "✓ HELM_PLUGINS is exported: ${HELM_PLUGINS_VAL}"
+else
+    echo "✗ HELM_PLUGINS not found in mise env output"
+    exit 1
+fi
+
+echo "--- Testing that the installed plugin is recognised by helm..."
+if HELM_PLUGINS="$HELM_PLUGINS_VAL" helm plugin list | grep -q "diff"; then
+    echo "✓ helm plugin list shows the installed diff plugin"
+else
+    echo "✗ helm plugin list did not show the diff plugin"
+    exit 1
+fi
+
+echo "=== All tests passed ==="
+mise plugins uninstall helm-plugin
