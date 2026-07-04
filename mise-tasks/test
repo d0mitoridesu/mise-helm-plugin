@@ -8,15 +8,16 @@ mise plugin link --force helm-plugin .
 # Clear cache to ensure fresh testing
 mise cache clear
 
+HELM_VERSION="4.2.2"
 TEST_TOOL="databus23/helm-diff"
-TEST_VERSION="3.9.0"
+TEST_VERSION="3.15.10"
 
 echo "=== Testing mise helm-plugin backend ==="
 
-# Ensure helm is available, installing it via mise if needed
-if ! command -v helm &>/dev/null && ! mise which helm &>/dev/null; then
+# Ensure mise-managed helm is available (system helm may be too old)
+if ! mise which helm &>/dev/null; then
     echo "--- Installing helm via mise..."
-    mise use --global helm@latest
+    mise use --system helm@"${HELM_VERSION}"
 fi
 
 echo "--- Testing version listing for ${TEST_TOOL}..."

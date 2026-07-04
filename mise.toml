@@ -3,6 +3,7 @@
 
 [tools]
 actionlint = "latest"
+helm = "4.2.2"
 hk = "latest"
 lua = "latest"
 lua-language-server = "latest"
