@@ -12,7 +12,12 @@ function PLUGIN:BackendListVersions(ctx)
 
     -- Fetch tags from GitHub API
     local url = "https://api.github.com/repos/" .. tool .. "/releases?per_page=100"
-    local result = cmd.exec("curl -sS " .. url)
+    local auth_header = ""
+    local token = os.getenv("GITHUB_TOKEN")
+    if token and token ~= "" then
+        auth_header = ' -H "Authorization: Bearer ' .. token .. '"'
+    end
+    local result = cmd.exec("curl -sS" .. auth_header .. " " .. url)
 
     local success, releases = pcall(json.decode, result)
     if not success or not releases then
